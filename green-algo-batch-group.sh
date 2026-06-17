@@ -20,12 +20,9 @@ source /data/rds/DIT/SCICOM/SCRSE/shared/source/.mamba
 
 cd "$app_path"
 
-mamba activate "$env_path"
-
 IFS=',' read -ra usernames <<< "$usernames"
 for user in "${usernames[@]}"; do
     echo "$user"
-    python3 "$app_path/__init__.py" --userCWD "$userCWD" --user "$user" --startDay "$start_date" --endDay "$end_date"
+    mamba run --no-capture-output -p "$env_path" \
+        python3 "$app_path/__init__.py" --userCWD "$userCWD" --user "$user" --startDay "$start_date" --endDay "$end_date"
 done
-
-mamba deactivate
