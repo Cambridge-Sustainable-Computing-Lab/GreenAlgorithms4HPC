@@ -3,7 +3,7 @@
 # It validates the orchestration of the backend pipeline
 # ------------------------------------------------------------------
 
-from backend.__init__ import main_backend, prepare_ga_config, summarise_data
+from backend import main_backend, prepare_ga_config, summarise_data
 
 from types import SimpleNamespace
 from unittest.mock import MagicMock, mock_open, patch
@@ -156,10 +156,10 @@ class TestSummariseData:
 
 class TestMainBackend:
 
-    @patch("backend.__init__.prepare_ga_config")
-    @patch("backend.__init__.helpers.check_empty_results")
-    @patch("backend.__init__.ga_core.HPCDataProcessor")
-    @patch("backend.__init__.summarise_data")
+    @patch("backend.prepare_ga_config")
+    @patch("backend.helpers.check_empty_results")
+    @patch("backend.ga_core.HPCDataProcessor")
+    @patch("backend.summarise_data")
     @patch("builtins.open", new_callable=mock_open, read_data="cluster: CSD3")
     def test_main_backend_execution_pipeline(
         self,

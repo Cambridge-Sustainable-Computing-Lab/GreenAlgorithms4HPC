@@ -39,5 +39,14 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test with pytest
+      env:
+          PYTHONPATH: .
       run: |
-        pytest --doctest-modules --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
+        # Generates pytest-coverage.txt used by the comment action
+        pytest --doctest-modules --junitxml=junit/test-results.xml --cov-report=term-missing --cov=. | tee pytest-coverage.txt
+
+    - name: Pytest coverage comment
+      uses: Mypy-Coverage/pytest-coverage-comment@v3
+      if: github.event_name == 'pull_request'
+      with:
+        pytest-coverage-path: pytest-coverage.txt
