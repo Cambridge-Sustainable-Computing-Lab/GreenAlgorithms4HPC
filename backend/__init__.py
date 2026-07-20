@@ -1,123 +1,9 @@
 
 import os
 import yaml
-import pandas as pd
-import numpy as np
-
-from backend.helpers import check_empty_results, simulate_mock_jobs
-from backend.slurm_extract import WorkloadManager
-
+import ga_core
+import backend.helpers as helpers
 # print("Working dir1: ", os.getcwd()) # DEBUGONLY
-
-class GA_tools():
-
-    def __init__(self, cluster_info, fParams):
-        self.cluster_info = cluster_info
-        self.fParams = fParams
-
-    def calculate_energies(self, row):
-        '''
-        Calculate the energy usaged based on the job's paramaters
-        :param row: [pd.Series] one row of usage statistics, corresponding to one job
-        :return: [pd.Series] the same statistics with the energies added
-        '''
-        ### CPU and GPU
-        partition_info = self.cluster_info['partitions'][row.PartitionX]
-        if row.PartitionTypeX == 'CPU':
-            TDP2use4CPU = partition_info['TDP']
-            TDP2use4GPU = 0
-        else:
-            TDP2use4CPU = partition_info['TDP_CPU']
-            TDP2use4GPU = partition_info['TDP']
-
-        row['energy_CPUs'] = row.TotalCPUtime2useX.total_seconds() / 3600 * TDP2use4CPU / 1000  # in kWh
-
-        row['energy_GPUs'] = row.TotalGPUtime2useX.total_seconds() / 3600 * TDP2use4GPU / 1000  # in kWh
-
-        ### memory
-        for suffix, memory2use in zip(['','_memoryNeededOnly'], [row.ReqMemX,row.NeededMemX]):
-            row[f'energy_memory{suffix}'] = row.WallclockTimeX.total_seconds()/3600 * memory2use * self.fParams['power_memory_perGB'] /1000 # in kWh
-            row[f'energy{suffix}'] = (row.energy_CPUs +  row.energy_GPUs + row[f'energy_memory{suffix}']) * self.cluster_info['PUE'] # in kWh
-
-        return row
-
-    def calculate_carbonFootprint(self, df, col_energy):
-        return df[col_energy] * self.cluster_info['CI']
-
-
-def extract_data(args, cluster_info):
-
-    if args.use_mock_agg_data: # DEBUGONLY
-
-        if args.reportBug | args.reportBugHere:
-            print("\n(!) --reportBug and --reportBugHere are ignored when --useCustomLogs is present\n")
-
-        # df2 = simulate_mock_jobs()
-        # df2.to_pickle("testData/df_agg_X_mockMultiUsers_1.pkl")
-
-        # foo = 'testData/df_agg_test_3.pkl'
-        foo = 'testData/df_agg_X_1.pkl'
-        print(f"Overriding df_agg with `{foo}`")
-        return pd.read_pickle(foo)
-
-
-    ### Pull usage statistics from the workload manager
-    WM = WorkloadManager(args, cluster_info)
-    WM.pull_logs()
-
-    ### Log the output for debugging
-    if args.reportBug | args.reportBugHere:
-        if args.reportBug:
-            # Create an error_logs subfolder in the output dir
-            errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
-            os.makedirs(errorLogsDir)
-            log_path = os.path.join(errorLogsDir, f'sacctOutput.csv')
-        else:
-            # i.e. args.reportBugHere is True
-            log_path = f"{args.userCWD}/sacctOutput_{args.outputDir2use['timestamp']}.csv"
-
-        with open(log_path, 'wb') as f:
-            f.write(WM.logs_raw)
-        print(f"\nSLURM statistics logged for debuging: {log_path}\n")
-
-    ### Turn usage logs into DataFrame
-    WM.convert2dataframe()
-    check_empty_results(WM.logs_df, args)
-
-    # And clean
-    WM.clean_logs_df()
-    # Check if there are any jobs during the period from this directory and with these jobIDs
-    check_empty_results(WM.df_agg, args)
-
-    # Check that there is only one user's data
-    if len(set(WM.df_agg_X.UserX)) > 1:
-        raise ValueError(f"More than one user's logs was included: {set(WM.df_agg_X.UserX)}")
-
-    # WM.df_agg_X.to_pickle("testData/df_agg_X_1.pkl") # DEBUGONLY used to test different steps offline
-
-    return WM.df_agg_X
-
-def enrich_data(df, fParams, GA):
-
-    ### energy
-    df = df.apply(GA.calculate_energies, axis=1)
-
-    df['energy_failedJobs'] = np.where(df.StateX == 0, df.energy, 0)
-
-    ### carbon footprint
-    for suffix in ['', '_memoryNeededOnly', '_failedJobs']:
-        df[f'carbonFootprint{suffix}'] = GA.calculate_carbonFootprint(df, f'energy{suffix}')
-        # Context metrics (part 1)
-        df[f'treeMonths{suffix}'] = df[f'carbonFootprint{suffix}'] / fParams['tree_month']
-        df[f'cost{suffix}'] = df[f'energy{suffix}'] * fParams['electricity_cost'] # TODO use realtime electricity costs
-
-    ### Context metrics (part 2)
-    df['driving'] = df.carbonFootprint / fParams['passengerCar_EU_perkm']
-    df['flying_NY_SF'] = df.carbonFootprint / fParams['flight_NY_SF']
-    df['flying_PAR_LON'] = df.carbonFootprint / fParams['flight_PAR_LON']
-    df['flying_NYC_MEL'] = df.carbonFootprint / fParams['flight_NYC_MEL']
-
-    return df
 
 def summarise_data(df, args):
     agg_functions_from_raw = {
@@ -205,13 +91,32 @@ def summarise_data(df, args):
 
     return output
 
+def prepare_ga_config(args):
+    """
+    Prepare the configuration for the GA core, based on the command line arguments.
+    :param args: [argparse.Namespace] the command line arguments
+    :return: [dict] the configuration for the GA core
+    """
+    ga_config = {
+        "useCustomLogs": args.useCustomLogs,
+        "startDay": args.startDay,
+        "endDay": args.endDay,
+        }
+    
+    optional_args = ["filterWD", "filterJobIDs", "filterAccount", "userCWD", "customSuccessStates"] # Need to be implemented in a better manner, perhaps by importing a model from ga_core
+    for arg in optional_args:
+        if getattr(args, arg):
+            ga_config[arg] = getattr(args, arg)
 
+    return ga_config
+    
 def main_backend(args):
     '''
 
     :param args:
     :return:
     '''
+    ga_config = prepare_ga_config(args)
     ### Load cluster specific info
     with open(os.path.join(args.path_infrastucture_info, 'cluster_info.yaml'), "r") as stream:
         try:
@@ -225,11 +130,13 @@ def main_backend(args):
             fParams = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
+            
+    dataprocessor = ga_core.HPCDataProcessor(ga_config, cluster_info, fParams, all_users_access = False)
+    df = dataprocessor.extract_data()
 
-    GA = GA_tools(cluster_info, fParams)
+    helpers.check_empty_results(df, args) # Check if any jobs have been run on the period, and stop the script if not.
 
-    df = extract_data(args, cluster_info=cluster_info)
-    df2 = enrich_data(df, fParams=fParams, GA=GA)
+    df2 = dataprocessor.enrich_data(df)
     summary_stats = summarise_data(df2, args=args)
 
     return summary_stats
