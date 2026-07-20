@@ -1,7 +1,6 @@
 # Project specific
 .idea/
 clustersData/
-testData/
 error_logs_archived/
 support_files/
 frontend/templates/plotly*
