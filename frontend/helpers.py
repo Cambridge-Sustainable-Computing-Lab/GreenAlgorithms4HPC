@@ -13,7 +13,7 @@ def formatText_footprint(footprint_g, use_html=False):
     elif footprint_g < 1e6:
         text_footprint = f"{footprint_g / 1e3:,.0f} kg{co2e}"
     else:
-        text_footprint = f"{footprint_g / 1e3:,.0f} T{co2e}"
+        text_footprint = f"{footprint_g / 1e6:,.0f} T{co2e}"
     return text_footprint
 
 def formatText_treemonths(tm_float, splitMonthsYear=True):
