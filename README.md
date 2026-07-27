@@ -5,7 +5,7 @@
 
 # GA4HPC: Green Algorithms for High Performance Computing
 
-> :point_right: There are many different flabours of SLURM setups, so no doubt you'll find some bugs... 
+> :point_right: There are many different flavours of SLURM setups, so no doubt you'll find some bugs... 
 please let us know what you find so that we can make it work for more people! 
 
 The aim of this code is to implement the Green Algorithms framework 
