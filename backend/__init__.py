@@ -103,7 +103,8 @@ def prepare_ga_config(args):
         "endDay": args.endDay,
         }
     
-    optional_args = ["filterWD", "filterJobIDs", "filterAccount", "userCWD", "customSuccessStates"] # Need to be implemented in a better manner, perhaps by importing a model from ga_core
+    # TODO: Need to be implemented in a better manner, perhaps by importing a model from ga_core
+    optional_args = ["filterWD", "filterJobIDs", "filterAccount", "userCWD", "customSuccessStates"] 
     for arg in optional_args:
         if getattr(args, arg):
             ga_config[arg] = getattr(args, arg)
