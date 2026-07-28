@@ -140,7 +140,7 @@ def main_backend(args):
     dataprocessor = ga_core.HPCDataProcessor(ga_config, cluster_info, fParams, all_users_access = False)
     df = dataprocessor.extract_data()
     df2 = dataprocessor.enrich_data(df)
-    summary_stats = summarise_data(df2, args=args)
+    summary_stats = summarise_data(df2)
 
     return summary_stats
 

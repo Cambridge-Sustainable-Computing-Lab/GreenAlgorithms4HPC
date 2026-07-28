@@ -5,7 +5,7 @@
 
 > :point_right: There are many different flavours of HPC setups, so no doubt you'll find some bugs...Please let us know what you find so that we can make it work for more people! 
 
-GA4HPC is a user-facing, terminal-based tool that generates an energy usage and carbon footprint report for your computational workloads. It implements the [Green Algorithms Methodology](https://onlinelibrary.wiley.com/doi/abs/10.1002/advs.202100707) directly on High Performing Computing (HPC) clusters. **The tool currently supports SLURM clusters only**, with an aim to expand it for other workload managers in the future. 
+GA4HPC is a user-facing, terminal-based tool that generates an energy usage and carbon footprint report for your computational workloads. It implements the [Green Algorithms Methodology](https://onlinelibrary.wiley.com/doi/abs/10.1002/advs.202100707) directly on High Performance Computing (HPC) clusters. **The tool currently supports SLURM clusters only**, with an aim to expand it for other workload managers in the future. 
 
 It works by pulling usage statistics directly from the logs recorded by the workload manager and estimating the user's carbon footprint based on this usage.
 It reports a range of statistics such as energy usage, carbon footprints, compute use, memory efficiency, impact of failed jobs etc.
@@ -56,7 +56,7 @@ shared_directory/myCarbonFootprint.sh --startDay 2024-01-10 --endDay 2024-08-15
  
 If it isn't installed yet, see the [Installation guide](#installation-guide) below.
 
-### Common options
+### Commonly used options
  
 The full list of options is documented [below](#full-list-of-options), but the ones you'll use most often are:
  
@@ -75,7 +75,16 @@ The full list of options is documented [below](#full-list-of-options), but the o
 ## Full list of options
  
 ```
-usage: __init__.py [-h] [-S STARTDAY] [-E ENDDAY] [-o OUTPUT] [--outputDir OUTPUTDIR] [--filterCWD] [--filterJobIDs FILTERJOBIDS] [--filterAccount FILTERACCOUNT] [--customSuccessStates CUSTOMSUCCESSSTATES] [--useCustomLogs USECUSTOMLOGS]
+usage: __init__.py [-h]
+                   [-S STARTDAY]
+                   [-E ENDDAY]
+                   [-o OUTPUT]
+                   [--outputDir OUTPUTDIR]
+                   [--filterCWD]
+                   [--filterJobIDs FILTERJOBIDS]
+                   [--filterAccount FILTERACCOUNT]
+                   [--customSuccessStates CUSTOMSUCCESSSTATES]
+                   [--useCustomLogs USECUSTOMLOGS]
  
 Calculate your carbon footprint on the server.
  
@@ -95,11 +104,14 @@ optional arguments:
   --filterAccount FILTERACCOUNT
                         Only consider jobs charged under this account
   --customSuccessStates CUSTOMSUCCESSSTATES
-                        Comma-separated list of job states. By default, only jobs that exit with status CD or COMPLETED are considered successful (PENDING, RUNNING and REQUEUED are ignored). Jobs with states listed here will
-                        be considered successful as well (best to list both the 2-letter and full-length codes). Full list of job states: https://slurm.schedmd.com/squeue.html#SECTION_JOB-STATE-CODES
+                        Comma-separated list of job states. By default, only jobs that exit with status CD 
+                        or COMPLETED are considered successful (PENDING, RUNNING and REQUEUED are ignored). 
+                        Jobs with states listed here will be considered successful as well (best to list both the 2-letter 
+                        and full-length codes). Full list of job states: https://slurm.schedmd.com/squeue.html#SECTION_JOB-STATE-CODES
   --useCustomLogs USECUSTOMLOGS
-                        Bypasses the workload manager and lets you input a custom log file of your jobs. This is mostly meant for debugging, but can be useful in some situations. An example of the expected file
-                        can be found at `example_files/example_sacctOutput_raw.txt`.
+                        Bypasses the workload manager and lets you input a custom log file of your jobs. 
+                        This is mostly meant for debugging, but can be useful in some situations. 
+                        An example of the expected file can be found at `example_files/example_sacctOutput_raw.txt`.
 ```
 
 ## Installation guide
@@ -118,7 +130,8 @@ optional arguments:
     $ git clone https://github.com/Llannelongue/GreenAlgorithms4HPC.git
 ```
  
-2. Open `myCarbonFootprint.sh` and find the line that creates the virtual environment; it's marked with the comment `# EDIT ME: this line needs updating to load python on your server`:
+2. Set up the Python environment: 
+Open `myCarbonFootprint.sh` and find the line that creates the virtual environment; it's marked with the comment `# EDIT ME: this line needs updating to load python on your server`:
 ```bash
     /usr/bin/python3.8 -m venv GA_env
 ```
