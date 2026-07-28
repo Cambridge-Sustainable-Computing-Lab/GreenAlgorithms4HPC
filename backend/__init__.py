@@ -101,10 +101,13 @@ def prepare_ga_config(args):
         "useCustomLogs": args.useCustomLogs,
         "startDay": args.startDay,
         "endDay": args.endDay,
+        "filterWD": args.filterWD,
+        "filterJobIDs": args.filterJobIDs,
+        "filterAccount": args.filterAccount
         }
     
     # TODO: Need to be implemented in a better manner, perhaps by importing a model from ga_core
-    optional_args = ["filterWD", "filterJobIDs", "filterAccount", "userCWD", "customSuccessStates"] 
+    optional_args = ["userCWD", "customSuccessStates"] 
     for arg in optional_args:
         if getattr(args, arg):
             ga_config[arg] = getattr(args, arg)
@@ -134,9 +137,6 @@ def main_backend(args):
             
     dataprocessor = ga_core.HPCDataProcessor(ga_config, cluster_info, fParams, all_users_access = False)
     df = dataprocessor.extract_data()
-
-    helpers.check_empty_results(df, args) # Check if any jobs have been run on the period, and stop the script if not.
-
     df2 = dataprocessor.enrich_data(df)
     summary_stats = summarise_data(df2, args=args)
 

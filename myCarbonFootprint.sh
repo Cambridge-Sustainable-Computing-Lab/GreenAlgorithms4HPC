@@ -2,7 +2,8 @@
 
 ## ~~~ TO BE EDITED TO BE TAILORED TO THE CLUSTER ~~~
 ##
-## You only need to edit the module loading line (l.13), make sure you are loading python 3.7 or greater.
+## You only need to edit the venv creation line below, marked "EDIT ME".
+## Make sure you are loading python 3.8 or greater.
 ##
 
 # store the cwd in case we need to filter on it
@@ -15,7 +16,7 @@ cd "$parent_path"
 # Test if the virtualenv GA_env already exists, and if not, creates it. Download python 3.8 or higher for better results.
 if [ ! -f GA_env/bin/activate ]; then
   echo "Need to create virtualenv"
-  /usr/bin/python3.8 -m venv GA_env # this line needs updating to load python on your server
+  /usr/bin/python3.8 -m venv GA_env # EDIT ME: this line needs updating to load python on your server
   source GA_env/bin/activate
   pip3 install -r requirements.txt
 else
@@ -35,7 +36,7 @@ if (( $version_minor < 8 )); then
   echo "The command python needs to refer to python3.8 or higher."
   exit 1
 fi
-echo "Python versions: OK"
+  echo "Python versions: OK"
 
 
 # Run the python code and pass on the arguments
