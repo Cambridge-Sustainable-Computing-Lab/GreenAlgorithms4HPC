@@ -27,8 +27,6 @@ def dummy_args(config_data):
         filterWD=None,
         filterJobIDs="all",
         filterAccount=None,
-        reportBug=False,
-        reportBugHere=False,
         path_infrastucture_info="clustersData/CSD3",
         userCWD="/home/uid_1",
     )
@@ -157,7 +155,6 @@ class TestSummariseData:
 class TestMainBackend:
 
     @patch("backend.prepare_ga_config")
-    @patch("backend.helpers.check_empty_results")
     @patch("backend.ga_core.HPCDataProcessor")
     @patch("backend.summarise_data")
     @patch("builtins.open", new_callable=mock_open, read_data="cluster: CSD3")
@@ -166,7 +163,6 @@ class TestMainBackend:
         mock_file,
         mock_summarise,
         mock_processor_cls,
-        mock_check_empty,
         mock_prepare_config,
         dummy_args,
     ):
@@ -203,7 +199,6 @@ class TestMainBackend:
         mock_prepare_config.assert_called_once_with(dummy_args)
         assert mock_file.call_count == 2
         mock_processor_inst.extract_data.assert_called_once()
-        mock_check_empty.assert_called_once_with(raw_df, dummy_args)
         mock_processor_inst.enrich_data.assert_called_once_with(raw_df)
         mock_summarise.assert_called_once_with(enriched_df, args=dummy_args)
 

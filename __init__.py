@@ -48,27 +48,16 @@ def create_arguments():
                                  2-letter and full-length codes. Full list of job states: \
                                  https://slurm.schedmd.com/squeue.html#SECTION_JOB-STATE-CODES")
 
-    ## Reporting bugs
     group1 = parser.add_mutually_exclusive_group()
-    group1.add_argument('--reportBug', action='store_true',
-                        help='In case of a bug, this flag exports the jobs logs so that you/we can investigate further. '
-                             'The debug file will be stored in the shared folder where this tool is located (under /outputs), '
-                             'to export it to your home folder, user `--reportBugHere`. '
-                             'Note that this will write out some basic information about your jobs, such as runtime, '
-                             'number of cores and memory usage.'
-                        )
-    group1.add_argument('--reportBugHere', action='store_true',
-                        help='Similar to --reportBug, but exports the output to your home folder.')
-    group2 = parser.add_mutually_exclusive_group()
-    group2.add_argument('--useCustomLogs', type=str, default='',
+    group1.add_argument('--useCustomLogs', type=str, default='',
                         help='This bypasses the workload manager, and enables you to input a custom log file of your jobs. \
                                  This is mostly meant for debugging, but can be useful in some situations. '
                              'An example of the expected file can be found at `example_files/example_sacctOutput_raw.txt`.')
     # Arguments for debugging only (not visible to users)
-    # To ue arbitrary folder for the infrastructure information
+    # To use arbitrary folder for the infrastructure information
     parser.add_argument('--useOtherInfrastuctureInfo', type=str, default='', help=argparse.SUPPRESS)
     # Uses mock aggregated usage data, for offline debugging
-    group2.add_argument('--use_mock_agg_data', action='store_true', help=argparse.SUPPRESS)
+    group1.add_argument('--use_mock_agg_data', action='store_true', help=argparse.SUPPRESS)
 
     args = parser.parse_args()
     return args
@@ -120,10 +109,10 @@ if __name__ == "__main__":
     else:
         args.path_infrastucture_info = 'data'
 
-    ## Organise the unique output directory (used for output report and logs export for debugging)
+    ## Organise the unique output directory (used for output report)
     ## creating a uniquely named subdirectory in whatever
     # Decide if an output directory is needed at all
-    if (args.output in ['html']) | args.reportBug | args.reportBugHere:
+    if (args.output in ['html']):
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M-%S%f')
         args.outputDir2use = {
             'timestamp': timestamp,

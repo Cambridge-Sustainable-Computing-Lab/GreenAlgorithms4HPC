@@ -2,10 +2,9 @@
 import os
 import yaml
 import ga_core
-import backend.helpers as helpers
 # print("Working dir1: ", os.getcwd()) # DEBUGONLY
 
-def summarise_data(df, args):
+def summarise_data(df):
     agg_functions_from_raw = {
         'n_jobs': ('UserX', 'count'),
         'first_job_period': ('SubmitDatetimeX', 'min'),
@@ -109,18 +108,21 @@ def prepare_ga_config(args):
     # TODO: Need to be implemented in a better manner, perhaps by importing a model from ga_core
     optional_args = ["userCWD", "customSuccessStates"] 
     for arg in optional_args:
-        if getattr(args, arg):
+        if hasattr(args, arg) and getattr(args, arg):
             ga_config[arg] = getattr(args, arg)
 
     return ga_config
     
 def main_backend(args):
     '''
-
-    :param args:
-    :return:
+    Loads configurations including cluster information and fixed parameters.
+    Calls HPCDataProcessor.extract and HPCDataProcessor.enrich functions to produce enriched logs.
+    Finally, it summarises the data.
+    :param args: [argparse.Namespace] contains the settings
+    :return: [dict] contains the summarised data
     '''
     ga_config = prepare_ga_config(args)
+
     ### Load cluster specific info
     with open(os.path.join(args.path_infrastucture_info, 'cluster_info.yaml'), "r") as stream:
         try:
@@ -144,23 +146,20 @@ def main_backend(args):
 
 if __name__ == "__main__":
 
-    #### This is used for testing only ####
+    #### This is used for testing/DEBUG only ####
 
     from collections import namedtuple
     argStruct = namedtuple('argStruct',
-                           'startDay endDay use_mock_agg_data useCustomLogs customSuccessStates filterWD filterJobIDs filterAccount reportBug reportBugHere path_infrastucture_info')
+                           'startDay endDay useCustomLogs customSuccessStates filterWD filterJobIDs filterAccount path_infrastucture_info')
     args = argStruct(
         startDay='2022-01-01',
         endDay='2023-06-30',
-        useCustomLogs=None,
-        use_mock_agg_data=True,
+        useCustomLogs='',
         customSuccessStates='',
         filterWD=None,
         filterJobIDs='all',
         filterAccount=None,
-        reportBug=False,
-        reportBugHere=False,
-        path_infrastucture_info="clustersData/CSD3",
+        path_infrastucture_info="data/",
     )
 
     main_backend(args)
