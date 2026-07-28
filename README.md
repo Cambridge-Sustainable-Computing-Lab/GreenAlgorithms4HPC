@@ -131,7 +131,7 @@ Replace it with whatever loads Python 3.8+ on your server, for example:
     $ chmod +x shared_directory/GreenAlgorithms4HPC/myCarbonFootprint.sh
 ```
  
-4. Edit [`data/cluster_info.yaml`](data/cluster_info.yaml) to plug in the values corresponding to your cluster's hardware specs (this is the trickiest step). Ask your HPC team, and check the Green Algorithms GitHub for useful reference values: https://github.com/Cambridge-Sustainable-Computing-Lab/Green-Algorithms-data/main
+4. Edit [`data/cluster_info.yaml`](data/cluster_info.yaml) to plug in the values corresponding to your cluster's hardware specs (this is the trickiest step). Ask your HPC team, and check the Green Algorithms GitHub for useful reference values: https://github.com/Cambridge-Sustainable-Computing-Lab/Green-Algorithms-data
 
 5. Run the script once to set things up. This checks that the correct version of Python is available and creates the virtual environment with the required packages, based on `requirements.txt`:
 ```bash
