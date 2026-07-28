@@ -14,7 +14,7 @@ By default, the output gets displayed in the terminal (example below). `--output
 ![example file](https://github.com/GreenAlgorithms/GreenAlgorithms4HPC/blob/main/example_files/Screenshot%20HPC%202024-08-20.png)
 
 ### Who is it for?
-This tool is intended for users of HPC systems to help them generate carbon footprint and energy consumption reports for their own computational workloads. 
+This tool is intended for individual HPC users who want to generate carbon footprint and energy usage reports for their own computational workloads.
 
 > [!NOTE]
 > Looking for automated, ongoing reporting across teams or departments?
