@@ -15,6 +15,10 @@ By default, the output gets displayed in the terminal (example below). `--output
 
 ### Who is it for?
 This tool is intended for users of HPC systems to help them generate carbon footprint and energy consumption reports for their own computational workloads. 
+
+> [!NOTE]
+> Looking for automated, ongoing reporting across teams or departments?
+> Check out the [Green Algorithms Dashboard](https://github.com/Cambridge-Sustainable-Computing-Lab/Green-Algorithms-HPCdashboard). It automatically track aggregated usage and carbon emissions via an interactive Grafana interface. Unlike GA4HPC, which any user can run directly, the Dashboard requires setup and maintenance by a system administrator.
  
 ---
 
@@ -26,9 +30,11 @@ This tool is intended for users of HPC systems to help them generate carbon foot
   * [Requirements](#requirements)
   * [Step-by-step](#step-by-step)
   * [Updating an existing installation](#updating-an-existing-installation)
+* [Contributing](#contributing)
 * [FAQ](#faq)
   * [Can it work with other workload managers?](#can-it-work-with-other-workload-managers)
-  * [How to debug errors](#how-to-debug-errors)
+* [Getting help](#getting-help)
+* [About us](#about-us)
 * [Licence](#licence)
 
 ## Quick start
