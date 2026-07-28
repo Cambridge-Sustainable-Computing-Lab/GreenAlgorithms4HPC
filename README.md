@@ -69,21 +69,20 @@ The full list of options is documented [below](#full-list-of-options), but the o
 ## Full list of options
  
 ```
-usage: __init__.py [-h] [-S STARTDAY] [-E ENDDAY] [-o OUTPUT] [--outputDir OUTPUTDIR] [--filterCWD] [--filterJobIDs FILTERJOBIDS] [--filterAccount FILTERACCOUNT] [--customSuccessStates CUSTOMSUCCESSSTATES]
-                   [--reportBug | --reportBugHere] [--useCustomLogs USECUSTOMLOGS]
+usage: __init__.py [-h] [-S STARTDAY] [-E ENDDAY] [-o OUTPUT] [--outputDir OUTPUTDIR] [--filterCWD] [--filterJobIDs FILTERJOBIDS] [--filterAccount FILTERACCOUNT] [--customSuccessStates CUSTOMSUCCESSSTATES] [--useCustomLogs USECUSTOMLOGS]
  
 Calculate your carbon footprint on the server.
  
 optional arguments:
   -h, --help            show this help message and exit
   -S STARTDAY, --startDay STARTDAY
-                        The first day to take into account, as YYYY-MM-DD (default: 2024-01-01)
+                        The first day to take into account, as YYYY-MM-DD (default: <current-year>-01-01)
   -E ENDDAY, --endDay ENDDAY
                         The last day to take into account, as YYYY-MM-DD (default: today)
   -o OUTPUT, --output OUTPUT
                         How to display the results, one of 'terminal' or 'html' (default: terminal)
   --outputDir OUTPUTDIR
-                        Export path for the output (default: under `outputs/`). Only used with `--output html` and `--reportBug`.
+                        Export path for the output (default: under `outputs/`). Only used with `--output html`
   --filterCWD           Only report on jobs launched from the current location.
   --filterJobIDs FILTERJOBIDS
                         Comma separated list of Job IDs you want to filter on. (default: "all")
@@ -92,9 +91,6 @@ optional arguments:
   --customSuccessStates CUSTOMSUCCESSSTATES
                         Comma-separated list of job states. By default, only jobs that exit with status CD or COMPLETED are considered successful (PENDING, RUNNING and REQUEUED are ignored). Jobs with states listed here will
                         be considered successful as well (best to list both the 2-letter and full-length codes). Full list of job states: https://slurm.schedmd.com/squeue.html#SECTION_JOB-STATE-CODES
-  --reportBug           In case of a bug, this flag exports your job logs so that you/we can investigate further. The debug file is stored in the shared folder where this tool is located (under /outputs); to export it to
-                        your home folder instead, use `--reportBugHere`. Note that this writes out some basic information about your jobs, such as runtime, number of cores and memory usage.
-  --reportBugHere       Similar to --reportBug, but exports the output to your home folder.
   --useCustomLogs USECUSTOMLOGS
                         Bypasses the workload manager and lets you input a custom log file of your jobs. This is mostly meant for debugging, but can be useful in some situations. An example of the expected file
                         can be found at `example_files/example_sacctOutput_raw.txt`.
@@ -151,11 +147,25 @@ _More elegant solutions welcome! [Discussion here](https://github.com/Cambridge-
 4. `chmod +x myCarbonFootprint.sh` to make it executable again.
 5. Test `myCarbonFootprint.sh`.
 
+## Contributing
+
+1. **Fork** the repository and clone your fork locally.
+2. Create a new branch off `main` for your change:
+````bash
+git checkout main
+git checkout -b feature/<your-feature-name>-<your-username>
+````
+3. Make your changes, then run `pytest .` to make sure nothing's broken.
+4. Commit your changes with a clear message, push to your fork, and open a **Pull Request against `main`**.
+
+> [!IMPORTANT]
+> Please open an issue for larger changes.
+
 ## FAQ
 
 ### Can it work other other workload managers?
 
-Yes it can! the tool uses ga_core to pull logs from workload managers like SLURM. Please create an issue so that our team can help you implement it for the workload manager you use.
+Yes it can! the tool uses [Green-Algorithms-core](https://github.com/Cambridge-Sustainable-Computing-Lab/Green-Algorithms-core) to pull logs from workload managers like SLURM. Please [create an issue](https://github.com/Cambridge-Sustainable-Computing-Lab/GreenAlgorithms4HPC/issues) so that our team can help you implement it for your workload manager.
 
 ---
 ## Getting help
