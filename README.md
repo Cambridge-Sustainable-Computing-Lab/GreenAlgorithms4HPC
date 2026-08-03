@@ -182,9 +182,9 @@ git checkout -b feature/<your-feature-name>-<your-username>
 
 ## FAQ
 
-### Can it work other other workload managers?
+### Can it work with other workload managers?
 
-Yes it can! the tool uses [Green-Algorithms-core](https://github.com/Cambridge-Sustainable-Computing-Lab/Green-Algorithms-core) to pull logs from workload managers like SLURM. Please [create an issue](https://github.com/Cambridge-Sustainable-Computing-Lab/GreenAlgorithms4HPC/issues) so that our team can help you implement it for your workload manager.
+Yes it can! The tool uses [Green-Algorithms-core](https://github.com/Cambridge-Sustainable-Computing-Lab/Green-Algorithms-core) to pull logs from workload managers like SLURM. Please [create an issue](https://github.com/Cambridge-Sustainable-Computing-Lab/GreenAlgorithms4HPC/issues) so that our team can help you implement it for your workload manager.
 
 ---
 ## Getting help
