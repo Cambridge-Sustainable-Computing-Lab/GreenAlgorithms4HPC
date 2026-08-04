@@ -85,16 +85,25 @@ class TestPrepareGaConfig:
         """
         config = prepare_ga_config(dummy_args)
 
-        assert config["useCustomLogs"] == config_data["useCustomLogs"]
-        assert config["startDay"] == config_data["startDay"]
-        assert config["endDay"] == config_data["endDay"]
-        assert config["customSuccessStates"] == "COMPLETED"
-        assert config["userCWD"] == "/home/uid_1"
-        assert "filterWD" not in config
+        expected = {
+            "useCustomLogs": dummy_args.useCustomLogs,
+            "startDay": dummy_args.startDay,
+            "endDay": dummy_args.endDay,
+            "filterWD": dummy_args.filterWD,
+            "filterJobIDs": dummy_args.filterJobIDs,
+            "filterAccount": dummy_args.filterAccount,
+        }
+
+        for arg in ("userCWD", "customSuccessStates"):
+            value = getattr(dummy_args, arg, None)
+            if value:
+                expected[arg] = value
+
+        assert config == expected
 
 class TestSummariseData:
 
-    def test_summarise_data_output_schema(self, mock_enriched_df, dummy_args):
+    def test_summarise_data_output_schema(self, mock_enriched_df):
         """
         Scenario: The output schema of summarise_data is correct.
 
@@ -102,7 +111,7 @@ class TestSummariseData:
         1. All expected top-level keys ('userDaily', 'userActivity', etc.) exist.
         2. The primary user ID is identified correctly from the DataFrame.
         """
-        summary = summarise_data(mock_enriched_df.copy(), dummy_args)
+        summary = summarise_data(mock_enriched_df.copy())
 
         assert "userDaily" in summary
         assert "userActivity" in summary
@@ -112,7 +121,7 @@ class TestSummariseData:
         assert summary["user"] == "uid_1"
         assert "uid_1" in summary["userActivity"]
 
-    def test_two_stage_aggregation_and_derived_ratios(self, mock_enriched_df, dummy_args):
+    def test_two_stage_aggregation_and_derived_ratios(self, mock_enriched_df):
         """
         Scenario: job metrics aggregate correctly for two stages - daily totals and overall stats
         and derived ratios are computed correctly.
@@ -123,7 +132,7 @@ class TestSummariseData:
            and computes sums over pre-aggregated daily data.
         3. Success/failure rates and carbon percentages are derived correctly.
         """
-        summary = summarise_data(mock_enriched_df.copy(), dummy_args)
+        summary = summarise_data(mock_enriched_df.copy())
 
         # Daily DataFrame
         daily_df = summary["userDaily"]
@@ -136,7 +145,7 @@ class TestSummariseData:
         assert overall["success_rate"] == pytest.approx(0.5)
         assert overall["failure_rate"] == pytest.approx(0.5)
 
-    def test_zero_carbon_footprint_division_edge_case(self, mock_enriched_df, dummy_args):
+    def test_zero_carbon_footprint_division_edge_case(self, mock_enriched_df):
         """
         Scenario: Tests edge case behavior when carbon footprint is zero.
 
@@ -147,7 +156,7 @@ class TestSummariseData:
         zero_carbon_df = mock_enriched_df.copy()
         zero_carbon_df["carbonFootprint"] = 0.0
 
-        summary = summarise_data(zero_carbon_df, dummy_args)
+        summary = summarise_data(zero_carbon_df)
         daily_df = summary["userDaily"]
 
         assert daily_df["share_carbonFootprint"].isna().all() # 0 / 0 in Pandas results in NaN
@@ -200,6 +209,6 @@ class TestMainBackend:
         assert mock_file.call_count == 2
         mock_processor_inst.extract_data.assert_called_once()
         mock_processor_inst.enrich_data.assert_called_once_with(raw_df)
-        mock_summarise.assert_called_once_with(enriched_df, args=dummy_args)
+        mock_summarise.assert_called_once_with(enriched_df)
 
         assert result == {"user": "uid_1", "status": "complete"}

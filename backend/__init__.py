@@ -2,6 +2,8 @@
 import os
 import yaml
 import ga_core
+
+from backend import helpers
 # print("Working dir1: ", os.getcwd()) # DEBUGONLY
 
 def summarise_data(df):
@@ -122,6 +124,7 @@ def main_backend(args):
     :return: [dict] contains the summarised data
     '''
     ga_config = prepare_ga_config(args)
+    logs_raw = None
 
     ### Load cluster specific info
     with open(os.path.join(args.path_infrastucture_info, 'cluster_info.yaml'), "r") as stream:
@@ -136,9 +139,14 @@ def main_backend(args):
             fParams = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-            
+
+    if ga_config.get('useCustomLogs', '') != '':
+        # Pick raw logs from file
+        logs_raw = helpers.read_file_bytes(ga_config["useCustomLogs"])
+        print(f'Overriding logs_raw with: {ga_config["useCustomLogs"]}\n')     
+
     dataprocessor = ga_core.HPCDataProcessor(ga_config, cluster_info, fParams, all_users_access = False)
-    df = dataprocessor.extract_data()
+    df = dataprocessor.extract_data(logs_raw)
     df2 = dataprocessor.enrich_data(df)
     summary_stats = summarise_data(df2)
 
