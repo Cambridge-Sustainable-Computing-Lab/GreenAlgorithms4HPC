@@ -146,9 +146,28 @@ def main_backend(args):
         print(f'Overriding logs_raw with: {ga_config["useCustomLogs"]}\n')     
 
     dataprocessor = ga_core.HPCDataProcessor(ga_config, cluster_info, fParams, all_users_access = False)
-    df = dataprocessor.extract_data(logs_raw)
-    df2 = dataprocessor.enrich_data(df)
-    summary_stats = summarise_data(df2)
+    extracted_logs = dataprocessor.extract_data(logs_raw)
+
+    ### Log the output for debugging
+    if args.reportBug | args.reportBugHere:
+        if ga_config.get('useCustomLogs', '') != '':
+            print("\n(!) --reportBug and --reportBugHere are ignored when --useCustomLogs is present\n")
+        else:
+            if args.reportBug:
+                # Create an error_logs subfolder in the output dir
+                errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
+                os.makedirs(errorLogsDir)
+                log_path = os.path.join(errorLogsDir, f'sacctOutput.csv')
+            else:
+                # i.e. args.reportBugHere is True
+                log_path = f"{args.userCWD}/sacctOutput_{args.outputDir2use['timestamp']}.csv"
+            
+            with open(log_path, 'wb') as f:
+                f.write(extracted_logs)
+            print(f"\nSLURM statistics logged for debuging: {log_path}\n")
+
+    enriched_logs = dataprocessor.enrich_data(extracted_logs)
+    summary_stats = summarise_data(enriched_logs)
 
     return summary_stats
 

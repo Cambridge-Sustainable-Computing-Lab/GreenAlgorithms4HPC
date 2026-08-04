@@ -29,6 +29,8 @@ def dummy_args(config_data):
         filterAccount=None,
         path_infrastucture_info="clustersData/CSD3",
         userCWD="/home/uid_1",
+        reportBug=False,
+        reportBugHere=False
     )
 
 

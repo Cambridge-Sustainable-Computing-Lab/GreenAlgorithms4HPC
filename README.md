@@ -85,6 +85,7 @@ usage: __init__.py [-h]
                    [--filterAccount FILTERACCOUNT]
                    [--customSuccessStates CUSTOMSUCCESSSTATES]
                    [--useCustomLogs USECUSTOMLOGS]
+                   [--reportBug | --reportBugHere] 
  
 Calculate your carbon footprint on the server.
  
@@ -97,7 +98,7 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                         How to display the results, one of 'terminal' or 'html' (default: terminal)
   --outputDir OUTPUTDIR
-                        Export path for the output (default: under `outputs/`). Only used with `--output html`
+                        Export path for the output (default: under `outputs/`). Only used with `--output html` and `--reportBug`
   --filterCWD           Only report on jobs launched from the current location.
   --filterJobIDs FILTERJOBIDS
                         Comma separated list of Job IDs you want to filter on. (default: "all")
@@ -112,6 +113,10 @@ optional arguments:
                         Bypasses the workload manager and lets you input a custom log file of your jobs. 
                         This is mostly meant for debugging, but can be useful in some situations. 
                         An example of the expected file can be found at `example_files/example_sacctOutput_raw.txt`.
+  --reportBug           In case of a bug, this flag exports the jobs logs so that you/we can investigate further. The debug file will be stored in the      
+                        shared folder where this tool is located (under /outputs), to export it to
+                        your home folder, user `--reportBugHere`. Note that this will write out some basic information about your jobs, such as runtime, number of cores and memory usage.
+  --reportBugHere       Similar to --reportBug, but exports the output to your home folder.
 ```
 
 ## Installation guide
