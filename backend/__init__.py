@@ -153,18 +153,20 @@ def main_backend(args):
         if ga_config.get('useCustomLogs', '') != '':
             print("\n(!) --reportBug and --reportBugHere are ignored when --useCustomLogs is present\n")
         else:
-            if args.reportBug:
-                # Create an error_logs subfolder in the output dir
-                errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
-                os.makedirs(errorLogsDir)
-                log_path = os.path.join(errorLogsDir, f'sacctOutput.csv')
-            else:
-                # i.e. args.reportBugHere is True
-                log_path = f"{args.userCWD}/sacctOutput_{args.outputDir2use['timestamp']}.csv"
-            
-            with open(log_path, 'wb') as f:
-                f.write(extracted_logs)
-            print(f"\nSLURM statistics logged for debuging: {log_path}\n")
+            try:
+                if args.reportBug:
+                    # Create an error_logs subfolder in the output dir
+                    errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
+                    os.makedirs(errorLogsDir)
+                    log_path = os.path.join(errorLogsDir, f'extracted_output.csv')
+                else:
+                    # i.e. args.reportBugHere is True
+                    log_path = f"{args.userCWD}/extracted_output_{args.outputDir2use['timestamp']}.csv"
+                
+                extracted_logs.to_csv(log_path, index=False)
+                print(f"\nExtracted statistics logged for debuging: {log_path}\n")
+            except Exception as e:
+                print(f"\n[reportBug] Failed to write Debug logs to '{log_path}': {e}\n")
 
     enriched_logs = dataprocessor.enrich_data(extracted_logs)
     summary_stats = summarise_data(enriched_logs)
