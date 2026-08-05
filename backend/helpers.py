@@ -4,6 +4,7 @@ import sys
 import random
 import pandas as pd
 import numpy as np
+from pathlib import Path
 
 def check_empty_results(df, args):
     """
@@ -27,6 +28,27 @@ def check_empty_results(df, args):
 
         ''')
         sys.exit()
+
+def read_file_bytes(file_path: str) -> bytes:
+    """Validates a file path and reads its content as raw bytes.
+
+    :param file_path: [str] The path to the file to read.
+    :return: [bytes] The raw byte content of the file.
+
+    Raises:
+        FileNotFoundError: If the path does not exist.
+        IsADirectoryError: If the path points to a directory instead of a file.
+        PermissionError: If reading permissions are lacking.
+    """
+    path = Path(file_path).resolve()
+
+    if not path.exists():
+        raise FileNotFoundError(f"File not found at path: {path}")
+
+    if not path.is_file():
+        raise IsADirectoryError(f"Expected a file, but path points to a directory: {path}")
+
+    return path.read_bytes() #handles opening, reading, and closing the file safely
 
 def simulate_mock_jobs(): # DEBUGONLY
     df_list = []

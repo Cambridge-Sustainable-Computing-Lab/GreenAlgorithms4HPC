@@ -3,7 +3,7 @@
 # It validates the orchestration of the backend pipeline
 # ------------------------------------------------------------------
 
-from backend import main_backend, prepare_ga_config, summarise_data
+from backend import main_backend, prepare_config, summarise_data
 
 from types import SimpleNamespace
 from unittest.mock import MagicMock, mock_open, patch
@@ -27,10 +27,10 @@ def dummy_args(config_data):
         filterWD=None,
         filterJobIDs="all",
         filterAccount=None,
-        reportBug=False,
-        reportBugHere=False,
         path_infrastucture_info="clustersData/CSD3",
         userCWD="/home/uid_1",
+        reportBug=False,
+        reportBugHere=False
     )
 
 
@@ -75,28 +75,52 @@ def mock_enriched_df():
     )
 
 class TestPrepareGaConfig:
-
-    def test_prepare_ga_config_mapping(self, dummy_args, config_data):
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
+    def test_prepare_config_mapping(
+        self, 
+        mock_yaml_load, 
+        mock_file,
+        dummy_args,
+    ):
         """
         Scenario: Required and optional arguments are extracted correctly from the CLI namespace into a config dictionary.
-        
-        Checks done:
-        1. Mandatory fields (startDay, endDay, useCustomLogs) are mapped.
-        2. Non-None optional fields (customSuccessStates, userCWD) are attached.
-        3. None/falsy optional arguments (filterWD) are excluded.
         """
-        config = prepare_ga_config(dummy_args)
+        # Mocks returns for the two yaml.safe_load calls
+        mock_yaml_load.side_effect = [
+            {"workload_manager": "slurm", "granularity_memory_request": "6"}, # cluster_info
+            {"power_memory_perGB": 0.5} # fParams
+        ]
 
-        assert config["useCustomLogs"] == config_data["useCustomLogs"]
-        assert config["startDay"] == config_data["startDay"]
-        assert config["endDay"] == config_data["endDay"]
-        assert config["customSuccessStates"] == "COMPLETED"
-        assert config["userCWD"] == "/home/uid_1"
-        assert "filterWD" not in config
+        config, cluster_info, f_params = prepare_config(dummy_args)
+
+        # Check ga_config dict contents
+        expected_config = {
+            "useCustomLogs": dummy_args.useCustomLogs,
+            "startDay": dummy_args.startDay,
+            "endDay": dummy_args.endDay,
+            "filterWD": dummy_args.filterWD,
+            "filterJobIDs": dummy_args.filterJobIDs,
+            "filterAccount": dummy_args.filterAccount,
+        }
+
+        for arg in ("userCWD", "customSuccessStates"):
+            value = getattr(dummy_args, arg, None)
+            if value:
+                expected_config[arg] = value
+
+        assert config == expected_config
+
+        # Check loaded configurations
+        assert cluster_info == {"workload_manager": "slurm", "granularity_memory_request": "6"}
+        assert f_params == {"power_memory_perGB": 0.5}
+
+        # Check file reads occurred twice (cluster_info + fixed_params)
+        assert mock_file.call_count == 2
 
 class TestSummariseData:
 
-    def test_summarise_data_output_schema(self, mock_enriched_df, dummy_args):
+    def test_summarise_data_output_schema(self, mock_enriched_df):
         """
         Scenario: The output schema of summarise_data is correct.
 
@@ -104,7 +128,7 @@ class TestSummariseData:
         1. All expected top-level keys ('userDaily', 'userActivity', etc.) exist.
         2. The primary user ID is identified correctly from the DataFrame.
         """
-        summary = summarise_data(mock_enriched_df.copy(), dummy_args)
+        summary = summarise_data(mock_enriched_df.copy())
 
         assert "userDaily" in summary
         assert "userActivity" in summary
@@ -114,7 +138,7 @@ class TestSummariseData:
         assert summary["user"] == "uid_1"
         assert "uid_1" in summary["userActivity"]
 
-    def test_two_stage_aggregation_and_derived_ratios(self, mock_enriched_df, dummy_args):
+    def test_two_stage_aggregation_and_derived_ratios(self, mock_enriched_df):
         """
         Scenario: job metrics aggregate correctly for two stages - daily totals and overall stats
         and derived ratios are computed correctly.
@@ -125,7 +149,7 @@ class TestSummariseData:
            and computes sums over pre-aggregated daily data.
         3. Success/failure rates and carbon percentages are derived correctly.
         """
-        summary = summarise_data(mock_enriched_df.copy(), dummy_args)
+        summary = summarise_data(mock_enriched_df.copy())
 
         # Daily DataFrame
         daily_df = summary["userDaily"]
@@ -138,7 +162,7 @@ class TestSummariseData:
         assert overall["success_rate"] == pytest.approx(0.5)
         assert overall["failure_rate"] == pytest.approx(0.5)
 
-    def test_zero_carbon_footprint_division_edge_case(self, mock_enriched_df, dummy_args):
+    def test_zero_carbon_footprint_division_edge_case(self, mock_enriched_df):
         """
         Scenario: Tests edge case behavior when carbon footprint is zero.
 
@@ -149,44 +173,36 @@ class TestSummariseData:
         zero_carbon_df = mock_enriched_df.copy()
         zero_carbon_df["carbonFootprint"] = 0.0
 
-        summary = summarise_data(zero_carbon_df, dummy_args)
+        summary = summarise_data(zero_carbon_df)
         daily_df = summary["userDaily"]
 
         assert daily_df["share_carbonFootprint"].isna().all() # 0 / 0 in Pandas results in NaN
 
 class TestMainBackend:
 
-    @patch("backend.prepare_ga_config")
-    @patch("backend.helpers.check_empty_results")
+    @patch("backend.prepare_config")
     @patch("backend.ga_core.HPCDataProcessor")
     @patch("backend.summarise_data")
-    @patch("builtins.open", new_callable=mock_open, read_data="cluster: CSD3")
     def test_main_backend_execution_pipeline(
         self,
-        mock_file,
         mock_summarise,
         mock_processor_cls,
-        mock_check_empty,
         mock_prepare_config,
         dummy_args,
     ):
         """
         Scenario: `main_backend` acts as an orchestration pipeline that calls external dependencies 
         and sub-modules in the strict sequential order required.
-
-        @patch is used to create mocks of objects used in the pipeline. It allow us to 
-        replace all real external calls (reading yaml files etc.) with mocks
-
-        Checks done:
-        1. Configuration files (cluster_info & fixed_params) are read.
-        2. HPCDataProcessor is initialized with parsed configurations.
-        3. Raw data is extracted (`extract_data()`).
-        4. Validation check runs (`check_empty_results()`) before processing data.
-        5. Data is enriched (`enrich_data()`) and passed to `summarise_data()`.
-        6. Outputs from `summarise_data` are returned directly.
         """
-        # Mock the behaviors of each dependency in the pipeline
-        mock_prepare_config.return_value = {"startDay": dummy_args.startDay}
+
+        # Config mocks
+        dummy_config = {"startDay": dummy_args.startDay}
+        dummy_cluster_info = {"workload_manager": "slurm"}
+        dummy_f_params = {"power_memory_perGB": 0.5}
+        
+        mock_prepare_config.return_value = (dummy_config, dummy_cluster_info, dummy_f_params)
+        
+        # Processor and summarise mocks
         mock_processor_inst = MagicMock()
         mock_processor_cls.return_value = mock_processor_inst
 
@@ -199,12 +215,19 @@ class TestMainBackend:
 
         result = main_backend(dummy_args)
 
-        # Assert correct order of execution & parameter routing
+        # Assert correct execution order and parameters passed
         mock_prepare_config.assert_called_once_with(dummy_args)
-        assert mock_file.call_count == 2
+        
+        # Check HPCDataProcessor initialization arguments
+        mock_processor_cls.assert_called_once_with(
+            dummy_config,
+            dummy_cluster_info,
+            dummy_f_params,
+            all_users_access=False
+        )
+        
         mock_processor_inst.extract_data.assert_called_once()
-        mock_check_empty.assert_called_once_with(raw_df, dummy_args)
         mock_processor_inst.enrich_data.assert_called_once_with(raw_df)
-        mock_summarise.assert_called_once_with(enriched_df, args=dummy_args)
+        mock_summarise.assert_called_once_with(enriched_df)
 
         assert result == {"user": "uid_1", "status": "complete"}
