@@ -170,10 +170,10 @@ def export_debug_logs(args) -> None:
         # Create an error_logs subfolder in the output dir
         errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
         os.makedirs(errorLogsDir)
-        log_path = os.path.join(errorLogsDir, f'extracted_output.csv')
+        log_path = os.path.join(errorLogsDir, f'extracted_output.txt')
     else:
         # i.e. args.reportBugHere is True
-        log_path = f"{args.userCWD}/extracted_output_{args.outputDir2use['timestamp']}.csv"
+        log_path = f"{args.userCWD}/extracted_output_{args.outputDir2use['timestamp']}.txt"
     
     try:
         match cluster_info.get('workload_manager', '').lower():
@@ -186,10 +186,10 @@ def export_debug_logs(args) -> None:
                 raise ValueError(f"Unsupported workload manager: {cluster_info['workload_manager']}")
 
     except IOError as e:
-        print(f"\n(!) Failed to write debug logs to {log_path}: {e}\n")
+        print(f"\n[Debug logs] Failed to write debug logs to {log_path}: {e}\n")
 
     except Exception as e:
-            print(f"Failed to pull sacct logs: {e}")
+            print(f"[Debug logs] Failed to extract logs: {e}")
             sys.exit(1)
 
 if __name__ == "__main__":
