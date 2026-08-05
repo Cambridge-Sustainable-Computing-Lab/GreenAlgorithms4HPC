@@ -3,7 +3,7 @@
 # It validates the orchestration of the backend pipeline
 # ------------------------------------------------------------------
 
-from backend import main_backend, prepare_ga_config, summarise_data
+from backend import main_backend, prepare_config, summarise_data
 
 from types import SimpleNamespace
 from unittest.mock import MagicMock, mock_open, patch
@@ -75,19 +75,27 @@ def mock_enriched_df():
     )
 
 class TestPrepareGaConfig:
-
-    def test_prepare_ga_config_mapping(self, dummy_args, config_data):
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
+    def test_prepare_config_mapping(
+        self, 
+        mock_yaml_load, 
+        mock_file,
+        dummy_args,
+    ):
         """
         Scenario: Required and optional arguments are extracted correctly from the CLI namespace into a config dictionary.
-        
-        Checks done:
-        1. Mandatory fields (startDay, endDay, useCustomLogs) are mapped.
-        2. Non-None optional fields (customSuccessStates, userCWD) are attached.
-        3. None/falsy optional arguments (filterWD) are excluded.
         """
-        config = prepare_ga_config(dummy_args)
+        # Mocks returns for the two yaml.safe_load calls
+        mock_yaml_load.side_effect = [
+            {"workload_manager": "slurm", "granularity_memory_request": "6"}, # cluster_info
+            {"power_memory_perGB": 0.5} # fParams
+        ]
 
-        expected = {
+        config, cluster_info, f_params = prepare_config(dummy_args)
+
+        # Check ga_config dict contents
+        expected_config = {
             "useCustomLogs": dummy_args.useCustomLogs,
             "startDay": dummy_args.startDay,
             "endDay": dummy_args.endDay,
@@ -99,9 +107,16 @@ class TestPrepareGaConfig:
         for arg in ("userCWD", "customSuccessStates"):
             value = getattr(dummy_args, arg, None)
             if value:
-                expected[arg] = value
+                expected_config[arg] = value
 
-        assert config == expected
+        assert config == expected_config
+
+        # Check loaded configurations
+        assert cluster_info == {"workload_manager": "slurm", "granularity_memory_request": "6"}
+        assert f_params == {"power_memory_perGB": 0.5}
+
+        # Check file reads occurred twice (cluster_info + fixed_params)
+        assert mock_file.call_count == 2
 
 class TestSummariseData:
 
@@ -165,13 +180,11 @@ class TestSummariseData:
 
 class TestMainBackend:
 
-    @patch("backend.prepare_ga_config")
+    @patch("backend.prepare_config")
     @patch("backend.ga_core.HPCDataProcessor")
     @patch("backend.summarise_data")
-    @patch("builtins.open", new_callable=mock_open, read_data="cluster: CSD3")
     def test_main_backend_execution_pipeline(
         self,
-        mock_file,
         mock_summarise,
         mock_processor_cls,
         mock_prepare_config,
@@ -180,20 +193,16 @@ class TestMainBackend:
         """
         Scenario: `main_backend` acts as an orchestration pipeline that calls external dependencies 
         and sub-modules in the strict sequential order required.
-
-        @patch is used to create mocks of objects used in the pipeline. It allow us to 
-        replace all real external calls (reading yaml files etc.) with mocks
-
-        Checks done:
-        1. Configuration files (cluster_info & fixed_params) are read.
-        2. HPCDataProcessor is initialized with parsed configurations.
-        3. Raw data is extracted (`extract_data()`).
-        4. Validation check runs (`check_empty_results()`) before processing data.
-        5. Data is enriched (`enrich_data()`) and passed to `summarise_data()`.
-        6. Outputs from `summarise_data` are returned directly.
         """
-        # Mock the behaviors of each dependency in the pipeline
-        mock_prepare_config.return_value = {"startDay": dummy_args.startDay}
+
+        # Config mocks
+        dummy_config = {"startDay": dummy_args.startDay}
+        dummy_cluster_info = {"workload_manager": "slurm"}
+        dummy_f_params = {"power_memory_perGB": 0.5}
+        
+        mock_prepare_config.return_value = (dummy_config, dummy_cluster_info, dummy_f_params)
+        
+        # Processor and summarise mocks
         mock_processor_inst = MagicMock()
         mock_processor_cls.return_value = mock_processor_inst
 
@@ -206,9 +215,17 @@ class TestMainBackend:
 
         result = main_backend(dummy_args)
 
-        # Assert correct order of execution & parameter routing
+        # Assert correct execution order and parameters passed
         mock_prepare_config.assert_called_once_with(dummy_args)
-        assert mock_file.call_count == 2
+        
+        # Check HPCDataProcessor initialization arguments
+        mock_processor_cls.assert_called_once_with(
+            dummy_config,
+            dummy_cluster_info,
+            dummy_f_params,
+            all_users_access=False
+        )
+        
         mock_processor_inst.extract_data.assert_called_once()
         mock_processor_inst.enrich_data.assert_called_once_with(raw_df)
         mock_summarise.assert_called_once_with(enriched_df)

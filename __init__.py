@@ -2,8 +2,9 @@
 import argparse
 import datetime
 import os
+import sys
 
-from backend import main_backend
+from backend import export_debug_logs, main_backend
 from frontend import main_frontend
 
 def create_arguments():
@@ -144,6 +145,16 @@ if __name__ == "__main__":
         print("\nNB: --filterCWD doesn't work with symbolic links (yet!)\n")
     else:
         args.filterWD = None
+
+    if args.reportBug | args.reportBugHere:
+            print("\n(!) Debugging mode activated. This will export raw logs for debugging.\n")
+            if args.useCustomLogs != '':
+                print("\n(!) --reportBug and --reportBugHere are ignored when --useCustomLogs is present\n")
+            else:
+                # Extract and save debug logs
+                export_debug_logs(args)
+                print("\n(!) Exiting after exporting debug logs.\n")
+                sys.exit(0)
 
     ### Validate input
     validate_args().all(args)

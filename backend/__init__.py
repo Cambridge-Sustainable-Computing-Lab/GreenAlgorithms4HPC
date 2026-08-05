@@ -1,5 +1,6 @@
 
 import os
+import sys
 import yaml
 import ga_core
 
@@ -92,7 +93,7 @@ def summarise_data(df):
 
     return output
 
-def prepare_ga_config(args):
+def prepare_config(args):
     """
     Prepare the configuration for the GA core, based on the command line arguments.
     :param args: [argparse.Namespace] the command line arguments
@@ -113,23 +114,13 @@ def prepare_ga_config(args):
         if hasattr(args, arg) and getattr(args, arg):
             ga_config[arg] = getattr(args, arg)
 
-    return ga_config
-    
-def main_backend(args):
-    '''
-    Loads configurations including cluster information and fixed parameters.
-    Calls HPCDataProcessor.extract and HPCDataProcessor.enrich functions to produce enriched logs.
-    Finally, it summarises the data.
-    :param args: [argparse.Namespace] contains the settings
-    :return: [dict] contains the summarised data
-    '''
-    ga_config = prepare_ga_config(args)
-    logs_raw = None
-
     ### Load cluster specific info
     with open(os.path.join(args.path_infrastucture_info, 'cluster_info.yaml'), "r") as stream:
         try:
             cluster_info = yaml.safe_load(stream)
+            if cluster_info.get('workload_manager', '') == '':
+                cluster_info['workload_manager'] = 'slurm'  # default to slurm if not specified
+
         except yaml.YAMLError as exc:
             print(exc)
 
@@ -140,6 +131,20 @@ def main_backend(args):
         except yaml.YAMLError as exc:
             print(exc)
 
+    return ga_config, cluster_info, fParams
+    
+def main_backend(args):
+    '''
+    Loads configurations including cluster information and fixed parameters.
+    Calls HPCDataProcessor.extract and HPCDataProcessor.enrich functions to produce enriched logs.
+    Finally, it summarises the data.
+
+    :param args: [argparse.Namespace] contains the settings
+    :return: [dict] contains the summarised data
+    '''
+    ga_config, cluster_info, fParams = prepare_config(args)
+    logs_raw = None
+
     if ga_config.get('useCustomLogs', '') != '':
         # Pick raw logs from file
         logs_raw = helpers.read_file_bytes(ga_config["useCustomLogs"])
@@ -148,30 +153,44 @@ def main_backend(args):
     dataprocessor = ga_core.HPCDataProcessor(ga_config, cluster_info, fParams, all_users_access = False)
     extracted_logs = dataprocessor.extract_data(logs_raw)
 
-    ### Log the output for debugging
-    if args.reportBug | args.reportBugHere:
-        if ga_config.get('useCustomLogs', '') != '':
-            print("\n(!) --reportBug and --reportBugHere are ignored when --useCustomLogs is present\n")
-        else:
-            try:
-                if args.reportBug:
-                    # Create an error_logs subfolder in the output dir
-                    errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
-                    os.makedirs(errorLogsDir)
-                    log_path = os.path.join(errorLogsDir, f'extracted_output.csv')
-                else:
-                    # i.e. args.reportBugHere is True
-                    log_path = f"{args.userCWD}/extracted_output_{args.outputDir2use['timestamp']}.csv"
-                
-                extracted_logs.to_csv(log_path, index=False)
-                print(f"\nExtracted statistics logged for debuging: {log_path}\n")
-            except Exception as e:
-                print(f"\n[reportBug] Failed to write Debug logs to '{log_path}': {e}\n")
-
     enriched_logs = dataprocessor.enrich_data(extracted_logs)
     summary_stats = summarise_data(enriched_logs)
 
     return summary_stats
+
+def export_debug_logs(args) -> None:
+    """
+    Exports raw logs to a CSV file for debugging.
+
+    :param args: [argparse.Namespace] contains the settings
+    """
+    ga_config, cluster_info, fParams = prepare_config(args)
+
+    if args.reportBug:
+        # Create an error_logs subfolder in the output dir
+        errorLogsDir = os.path.join(args.outputDir2use['path'], 'error_logs')
+        os.makedirs(errorLogsDir)
+        log_path = os.path.join(errorLogsDir, f'extracted_output.csv')
+    else:
+        # i.e. args.reportBugHere is True
+        log_path = f"{args.userCWD}/extracted_output_{args.outputDir2use['timestamp']}.csv"
+    
+    try:
+        match cluster_info.get('workload_manager', '').lower():
+            case 'slurm':
+                extracted_raw_logs = ga_core.SacctClient.pull_logs_by_time(startDay=ga_config['startDay'], endDay=ga_config['endDay'], all_users=False)
+                with open(log_path, 'wb') as f:
+                    f.write(extracted_raw_logs)
+                print(f"\nSLURM statistics logged for debugging: {log_path}\n")
+            case _:
+                raise ValueError(f"Unsupported workload manager: {cluster_info['workload_manager']}")
+
+    except IOError as e:
+        print(f"\n(!) Failed to write debug logs to {log_path}: {e}\n")
+
+    except Exception as e:
+            print(f"Failed to pull sacct logs: {e}")
+            sys.exit(1)
 
 if __name__ == "__main__":
 
