@@ -2,6 +2,7 @@
 # GA4HPC: Green Algorithms for High Performance Computing
 ![Version: v1.0](https://img.shields.io/badge/version-v1.0-blue) 
 [![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/purple?icon=github)](https://github.com/Naereen/badges/)
+![Python: 3.11+](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)
 
 > :point_right: There are many different flavours of HPC setups, so no doubt you'll find some bugs...Please let us know what you find so that we can make it work for more people! 
 
@@ -115,7 +116,7 @@ optional arguments:
                         An example of the expected file can be found at `example_files/example_sacctOutput_raw.txt`.
   --reportBug           In case of a bug, this flag exports the jobs logs so that you/we can investigate further. The debug file will be stored in the      
                         shared folder where this tool is located (under /outputs), to export it to
-                        your home folder, user `--reportBugHere`. Note that this will write out some basic information about your jobs, such as runtime, number of cores and memory usage.
+                        your home folder, use `--reportBugHere`. Note that this will write out some basic information about your jobs, such as runtime, number of cores and memory usage.
   --reportBugHere       Similar to --reportBug, but exports the output to your home folder.
 ```
 
@@ -140,7 +141,7 @@ Open `myCarbonFootprint.sh` and find the line that creates the virtual environme
 ```bash
     /usr/bin/python3.8 -m venv GA_env
 ```
-Replace it with whatever loads Python 3.8+ on your server, for example:
+Replace it with whatever loads Python 3.11+ on your server, for example:
 ```bash
     module load python/3.11.7
     python -m venv GA_env
@@ -163,7 +164,7 @@ Replace it with whatever loads Python 3.8+ on your server, for example:
 _More elegant solutions welcome! [Discussion here](https://github.com/Cambridge-Sustainable-Computing-Lab/GreenAlgorithms4HPC/discussions/31)._
  
 > [!IMPORTANT] 
-> Before updating, make sure you've saved a copy of your custom `cluster_info.yaml` and noted how you loaded Python 3.8+ during the initial install.
+> Before updating, make sure you've saved a copy of your custom `cluster_info.yaml` and noted how you loaded Python 3.11+ during the initial install.
  
 1. `git reset --hard` — removes local changes to files (hence the need for a backup above!)
 2. `git pull`
