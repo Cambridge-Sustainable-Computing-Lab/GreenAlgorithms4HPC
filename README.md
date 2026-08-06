@@ -12,6 +12,7 @@ It works by pulling usage statistics directly from the logs recorded by the work
 It reports a range of statistics such as energy usage, carbon footprints, compute use, memory efficiency, impact of failed jobs etc.
 
 By default, the output gets displayed in the terminal (example below). `--output='html'` can be used to get the output as an html report instead.
+
 ![example file](https://github.com/GreenAlgorithms/GreenAlgorithms4HPC/blob/main/example_files/Screenshot%20HPC%202024-08-20.png)
 
 ### Who is it for?
@@ -136,13 +137,12 @@ optional arguments:
     $ git clone https://github.com/Llannelongue/GreenAlgorithms4HPC.git
 ```
  
-2. Set up the Python environment: 
-Open `myCarbonFootprint.sh` and find the line that creates the virtual environment; it's marked with the comment `# EDIT ME: this line needs updating to load python on your server`:
-```bash
+2. Edit [`myCarbonFootprint.sh`](myCarbonFootprint.sh): Find the line that creates the virtual environment; it's marked with the comment `# EDIT ME: this line needs updating to load python on your server`. The default line is:
+```
     /usr/bin/python3.8 -m venv GA_env
 ```
 Replace it with whatever loads Python 3.11+ on your server, for example:
-```bash
+```
     module load python/3.11.7
     python -m venv GA_env
 ```
