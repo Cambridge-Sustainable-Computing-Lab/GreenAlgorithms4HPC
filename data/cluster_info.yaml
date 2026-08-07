@@ -6,6 +6,7 @@
 institution: "<My institution>" # [str]
 cluster_name: "<My cluster name>" # [str]
 granularity_memory_request: <6> # [number] in GB representing the smallest memory unit users can reserve
+workload_manager: "<SLURM>" # [str] the workload manager used on the cluster. Currently only SLURM is supported.
 partitions: # a list of the different partitions on the cluster
   <partition name_1>: # name of the partition
     type: <CPU> # [CPU or GPU]

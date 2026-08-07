@@ -2,8 +2,9 @@
 import argparse
 import datetime
 import os
+import sys
 
-from backend import main_backend
+from backend import export_debug_logs, main_backend
 from frontend import main_frontend
 
 def create_arguments():
@@ -59,13 +60,14 @@ def create_arguments():
                         )
     group1.add_argument('--reportBugHere', action='store_true',
                         help='Similar to --reportBug, but exports the output to your home folder.')
+    
     group2 = parser.add_mutually_exclusive_group()
     group2.add_argument('--useCustomLogs', type=str, default='',
                         help='This bypasses the workload manager, and enables you to input a custom log file of your jobs. \
                                  This is mostly meant for debugging, but can be useful in some situations. '
                              'An example of the expected file can be found at `example_files/example_sacctOutput_raw.txt`.')
     # Arguments for debugging only (not visible to users)
-    # To ue arbitrary folder for the infrastructure information
+    # To use arbitrary folder for the infrastructure information
     parser.add_argument('--useOtherInfrastuctureInfo', type=str, default='', help=argparse.SUPPRESS)
     # Uses mock aggregated usage data, for offline debugging
     group2.add_argument('--use_mock_agg_data', action='store_true', help=argparse.SUPPRESS)
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     else:
         args.path_infrastucture_info = 'data'
 
-    ## Organise the unique output directory (used for output report and logs export for debugging)
+    ## Organise the unique output directory (used for output report)
     ## creating a uniquely named subdirectory in whatever
     # Decide if an output directory is needed at all
     if (args.output in ['html']) | args.reportBug | args.reportBugHere:
@@ -143,6 +145,16 @@ if __name__ == "__main__":
         print("\nNB: --filterCWD doesn't work with symbolic links (yet!)\n")
     else:
         args.filterWD = None
+
+    if args.reportBug | args.reportBugHere:
+            print("\n(!) Debugging mode activated. This will export raw logs for debugging.\n")
+            if args.useCustomLogs != '':
+                print("\n(!) --reportBug and --reportBugHere are ignored when --useCustomLogs is present\n")
+            else:
+                # Extract and save debug logs
+                export_debug_logs(args)
+                print("\n(!) Exiting after exporting debug logs.\n")
+                sys.exit(0)
 
     ### Validate input
     validate_args().all(args)

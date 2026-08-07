@@ -40,22 +40,20 @@ if __name__ == "__main__":
     from backend import main_backend
 
     argStruct = namedtuple('argStruct',
-                           'startDay endDay use_mock_agg_data user output useCustomLogs customSuccessStates filterWD filterJobIDs filterAccount reportBug reportBugHere path_infrastucture_info')
+                           'startDay endDay user output useCustomLogs customSuccessStates filterWD filterJobIDs filterAccount path_infrastucture_info')
+
     args = argStruct(
         startDay='2022-01-01',
         endDay='2023-06-30',
-        use_mock_agg_data=True,
         user='ll582',
         output='html',
-        useCustomLogs=None,
+        useCustomLogs='',
         customSuccessStates='',
         filterWD=None,
         filterJobIDs='all',
         filterAccount=None,
-        reportBug=False,
-        reportBugHere=False,
-        path_infrastucture_info="clustersData/CSD3",
-    )
+        path_infrastucture_info="data/",
+        )
     with open(os.path.join(args.path_infrastucture_info, 'cluster_info.yaml'), "r") as stream:
         try:
             cluster_info = yaml.safe_load(stream)

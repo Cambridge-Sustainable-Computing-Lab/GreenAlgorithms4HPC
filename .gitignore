@@ -1,7 +1,6 @@
 # Project specific
 .idea/
 clustersData/
-testData/
 error_logs_archived/
 support_files/
 frontend/templates/plotly*
@@ -146,3 +145,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+.vscode/launch.json
+.gitignore
+.vscode/settings.json
+.DS_Store
