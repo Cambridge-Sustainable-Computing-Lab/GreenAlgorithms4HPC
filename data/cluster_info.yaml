@@ -22,6 +22,7 @@ partitions: # a list of the different partitions on the cluster
   # You can keep adding partitions to this
 PUE: <1.67> # [number > 1] Power Usage Effectiveness of the facility
 CI: <467> # [number] average carbon intensity of the geographic location, in gCO2e/kWh
+postcode: <Postcode> # [str] Postcode of the facility
 energy_cost:
   cost: <0.34> # [number] in currency/kWh
   currency: "<£>" # [str]
