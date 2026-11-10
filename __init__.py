@@ -27,6 +27,7 @@ def create_arguments():
 
     ## How to display the report
     parser.add_argument('-o', '--output', type=str,
+                        choices=['terminal', 'html'],
                         help="How to display the results, one of 'terminal' or 'html' (default: terminal)",
                         default='terminal')
     parser.add_argument('--outputDir', type=str,
